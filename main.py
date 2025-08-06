@@ -60,7 +60,7 @@ def list_available_permissions():
 def path_permissions(path: str):
     if path == "":
         raise HTTPException(400, "path query parameter is not set")
-    return {"path" : path, "permissions" : server.get_permissions(path)}
+    return {"permissions" : server.get_permissions(path)}
 
 @app.post("/users/{username}", status_code=200)
 def create_user(username: str):
