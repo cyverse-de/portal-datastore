@@ -41,7 +41,7 @@ class DataStoreAPI(object):
         ]
 
     def delete_home(self, username: str) -> None:
-        homedir = _homedir(username, self.zone)
+        homedir = self.home_directory(username)
         if self.session.collections.exists(homedir):
             self.session.collections.remove(homedir, force=True, recurse=True)
 
@@ -72,5 +72,5 @@ class DataStoreAPI(object):
 
         return self.session.acls.get(obj)
 
-def _homedir(username: str, zone: str) -> str:
-    return iRODSPath(f"/{zone}/home/{username}")
+    def home_directory(self, username: str) -> str:
+        return iRODSPath(f"/{self.zone}/home/{username}")

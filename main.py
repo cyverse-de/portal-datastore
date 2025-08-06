@@ -66,7 +66,14 @@ def path_permissions(path: str):
 def create_user(username: str):
     if username == "":
         raise HTTPException(400, "username must not be empty")
-    return {"user" : server.create_user(username)}
+    if server.user_exists(username):
+        raise HTTPException(400, "user exists")
+    irods_user = server.create_user(username)
+    return {
+        "user" : irods_user.name,
+        "type" : irods_user.type,
+        "zone" : irods_user.zone,
+    }
 
 @app.delete("/users/{username}", status_code=200)
 def delete_user(username: str):
@@ -80,7 +87,10 @@ def delete_home(username: str):
     if username == "":
         raise HTTPException(400, "username must not be empty")
     server.delete_home(username)
-    return {"user" : username}
+    return {
+        "user" : username,
+        "home" : server.home_directory(username)
+    }
 
 class PasswordChange(BaseModel):
     password: str
