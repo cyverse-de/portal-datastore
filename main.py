@@ -46,7 +46,7 @@ def path_exists(path: str):
         raise HTTPException(400, "path query parameter is not set")
     return {"path" : path, "exists" : server.path_exists(path)}
 
-@app.get("/user/{username}/exists", status_code=200)
+@app.get("/users/{username}/exists", status_code=200)
 def user_exists(username: str):
     if username == "":
         raise HTTPException(400, "username must not be empty")
@@ -95,7 +95,7 @@ def delete_home(username: str):
 class PasswordChange(BaseModel):
     password: str
 
-@app.post("/user/{username}/password", status_code=200)
+@app.post("/users/{username}/password", status_code=200)
 def change_password(username: str, password_change: PasswordChange):
     if username == "":
         raise HTTPException(400, "username must not be empty")
