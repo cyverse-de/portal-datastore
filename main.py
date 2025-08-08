@@ -44,23 +44,39 @@ def hello():
 def path_exists(path: str):
     if path == "":
         raise HTTPException(400, "path query parameter is not set")
-    return {"path" : path, "exists" : server.path_exists(path)}
+    try:
+        exists = server.path_exists(path)
+    except Exception as e:
+        raise HTTPException(500, e)
+    return {"path" : path, "exists" : exists}
 
 @app.get("/users/{username}/exists", status_code=200)
 def user_exists(username: str):
     if username == "":
         raise HTTPException(400, "username must not be empty")
-    return {"user":username, "exists": server.user_exists(username)}
+    try:
+        exists = server.user_exists(username)
+    except Exception as e:
+        raise HTTPException(500, e)
+    return {"user":username, "exists": exists}
 
 @app.get("/permissions/available", status_code=200)
 def list_available_permissions():
-    return {"permissions" : server.list_available_permissions()}
+    try:
+        list = server.list_available_permissions()
+    except Exception as e:
+        raise HTTPException(500, e)
+    return {"permissions" : list}
 
 @app.get("/path/permissions", status_code=200)
 def path_permissions(path: str):
     if path == "":
         raise HTTPException(400, "path query parameter is not set")
-    return {"permissions" : server.get_permissions(path)}
+    try:
+        perms = server.get_permissions(path)
+    except Exception as e:
+        raise HTTPException(500, e)
+    return {"permissions" : perms}
 
 @app.post("/users/{username}", status_code=200)
 def create_user(username: str):
@@ -68,7 +84,10 @@ def create_user(username: str):
         raise HTTPException(400, "username must not be empty")
     if server.user_exists(username):
         raise HTTPException(400, "user exists")
-    irods_user = server.create_user(username)
+    try:
+        irods_user = server.create_user(username)
+    except Exception as e:
+        raise HTTPException(500, e)
     return {
         "user" : irods_user.name,
         "type" : irods_user.type,
@@ -79,14 +98,20 @@ def create_user(username: str):
 def delete_user(username: str):
     if username == "":
         raise HTTPException(400, "username must not be empty")
-    server.delete_user(username)
+    try:
+        server.delete_user(username)
+    except Exception as e:
+        raise HTTPException(500, e)
     return {"user" : username}
 
 @app.delete("/users/{username}/home", status_code=200)
 def delete_home(username: str):
     if username == "":
         raise HTTPException(400, "username must not be empty")
-    server.delete_home(username)
+    try:
+        server.delete_home(username)
+    except Exception as e:
+        raise HTTPException(500, e)
     return {
         "user" : username,
         "home" : server.home_directory(username)
@@ -99,13 +124,18 @@ class PasswordChange(BaseModel):
 def change_password(username: str, password_change: PasswordChange):
     if username == "":
         raise HTTPException(400, "username must not be empty")
-    server.change_password(username, password_change.password)
+    try:
+        server.change_password(username, password_change.password)
+    except Exception as e:
+        raise HTTPException(500, e)
     return {"user" : username}
+
 
 class PathPermission(BaseModel):
     username: str
     path: str
     permission: str
+
 
 @app.post("/path/chmod", status_code=200)
 def chmod(perm_change: PathPermission):
@@ -121,5 +151,8 @@ def chmod(perm_change: PathPermission):
         raise HTTPException(400, f"permission {perm_change.permission} does not exist")
     if not server.path_exists(perm_change.path):
         raise HTTPException(400, f"path {perm_change.path} does not exist")
-    server.chmod(perm_change.username, perm_change.permission, perm_change.path)
+    try:
+        server.chmod(perm_change.username, perm_change.permission, perm_change.path)
+    except Exception as e:
+        raise HTTPException(500, e)
     return perm_change
