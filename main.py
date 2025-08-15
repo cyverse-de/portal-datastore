@@ -40,6 +40,7 @@ server = ds.DataStoreAPI(ds_host, ds_port, ds_user, ds_password, ds_zone)
 def hello():
     return "Hello from portal-datastore."
 
+
 @app.get("/path/exists", status_code=200)
 def path_exists(path: str):
     if path == "":
@@ -48,7 +49,8 @@ def path_exists(path: str):
         exists = server.path_exists(path)
     except Exception as e:
         raise HTTPException(500, e)
-    return {"path" : path, "exists" : exists}
+    return {"path": path, "exists": exists}
+
 
 @app.get("/users/{username}/exists", status_code=200)
 def user_exists(username: str):
@@ -58,7 +60,8 @@ def user_exists(username: str):
         exists = server.user_exists(username)
     except Exception as e:
         raise HTTPException(500, e)
-    return {"user":username, "exists": exists}
+    return {"user": username, "exists": exists}
+
 
 @app.get("/permissions/available", status_code=200)
 def list_available_permissions():
@@ -66,7 +69,8 @@ def list_available_permissions():
         list = server.list_available_permissions()
     except Exception as e:
         raise HTTPException(500, e)
-    return {"permissions" : list}
+    return {"permissions": list}
+
 
 @app.get("/path/permissions", status_code=200)
 def path_permissions(path: str):
@@ -76,7 +80,8 @@ def path_permissions(path: str):
         perms = server.get_permissions(path)
     except Exception as e:
         raise HTTPException(500, e)
-    return {"permissions" : perms}
+    return {"permissions": perms}
+
 
 @app.post("/users/{username}", status_code=200)
 def create_user(username: str):
@@ -89,10 +94,11 @@ def create_user(username: str):
     except Exception as e:
         raise HTTPException(500, e)
     return {
-        "user" : irods_user.name,
-        "type" : irods_user.type,
-        "zone" : irods_user.zone,
+        "user": irods_user.name,
+        "type": irods_user.type,
+        "zone": irods_user.zone,
     }
+
 
 @app.delete("/users/{username}", status_code=200)
 def delete_user(username: str):
@@ -102,7 +108,19 @@ def delete_user(username: str):
         server.delete_user(username)
     except Exception as e:
         raise HTTPException(500, e)
-    return {"user" : username}
+    return {"user": username}
+
+
+@app.get("/users/{username}/home", status_code=200)
+def get_home_dir(username: str):
+    if username == "":
+        raise HTTPException(400, "username must not be empty")
+    try:
+        home_dir = server.home_directory(username)
+    except Exception as err:
+        raise HTTPException(500, err)
+    return {"user": username, "home": home_dir}
+
 
 @app.delete("/users/{username}/home", status_code=200)
 def delete_home(username: str):
@@ -112,13 +130,12 @@ def delete_home(username: str):
         server.delete_home(username)
     except Exception as e:
         raise HTTPException(500, e)
-    return {
-        "user" : username,
-        "home" : server.home_directory(username)
-    }
+    return {"user": username, "home": server.home_directory(username)}
+
 
 class PasswordChange(BaseModel):
     password: str
+
 
 @app.post("/users/{username}/password", status_code=200)
 def change_password(username: str, password_change: PasswordChange):
@@ -128,7 +145,7 @@ def change_password(username: str, password_change: PasswordChange):
         server.change_password(username, password_change.password)
     except Exception as e:
         raise HTTPException(500, e)
-    return {"user" : username}
+    return {"user": username}
 
 
 class PathPermission(BaseModel):
@@ -146,13 +163,19 @@ def chmod(perm_change: PathPermission):
     if perm_change.permission == "":
         raise HTTPException(400, "permission must be set in request body")
     if not server.user_exists(perm_change.username):
-        raise HTTPException(400, f"username {perm_change.username} does not exist")
+        raise HTTPException(
+            400, f"username {perm_change.username} does not exist"
+        )
     if perm_change.permission not in server.list_available_permissions():
-        raise HTTPException(400, f"permission {perm_change.permission} does not exist")
+        raise HTTPException(
+            400, f"permission {perm_change.permission} does not exist"
+        )
     if not server.path_exists(perm_change.path):
         raise HTTPException(400, f"path {perm_change.path} does not exist")
     try:
-        server.chmod(perm_change.username, perm_change.permission, perm_change.path)
+        server.chmod(
+            perm_change.username, perm_change.permission, perm_change.path
+        )
     except Exception as e:
         raise HTTPException(500, e)
     return perm_change
