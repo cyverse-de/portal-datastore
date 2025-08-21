@@ -1,9 +1,10 @@
-from irods.exception import UserDoesNotExist
-from irods.session import iRODSSession
-from irods.path import iRODSPath
-from irods.user import iRODSUser
-from irods.models import User
 from irods.access import iRODSAccess
+from irods.exception import UserDoesNotExist
+from irods.models import User
+from irods.path import iRODSPath
+from irods.session import iRODSSession
+from irods.user import iRODSUser
+
 
 class DataStoreAPI(object):
     _user_type = "rodsuser"
@@ -20,7 +21,9 @@ class DataStoreAPI(object):
 
     def path_exists(self, a_path: str) -> bool:
         fixed_path = iRODSPath(a_path)
-        return self.session.data_objects.exists(fixed_path) or self.session.collections.exists(fixed_path)
+        return self.session.data_objects.exists(
+            fixed_path
+        ) or self.session.collections.exists(fixed_path)
 
     def user_exists(self, username: str) -> bool:
         user_exists = False
@@ -36,8 +39,9 @@ class DataStoreAPI(object):
     def list_users_by_username(self, username: str) -> list[iRODSUser]:
         return [
             self.session.users.get(u[User.name], u[User.zone])
-            for u in self.session.query(User) \
-                .filter(User.name == username and User.zone == self.zone)
+            for u in self.session.query(User).filter(
+                User.name == username and User.zone == self.zone
+            )
         ]
 
     def delete_home(self, username: str) -> None:
@@ -47,6 +51,9 @@ class DataStoreAPI(object):
 
     def create_user(self, username: str) -> iRODSUser:
         return self.session.users.create(username, DataStoreAPI._user_type)
+
+    def get_user(self, username: str) -> iRODSUser:
+        return self.session.users.get(username, self.zone)
 
     def delete_user(self, username: str) -> None:
         self.session.users.get(username, self.zone).remove()
