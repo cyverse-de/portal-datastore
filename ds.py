@@ -81,3 +81,33 @@ class DataStoreAPI(object):
 
     def home_directory(self, username: str) -> str:
         return iRODSPath(f"/{self.zone}/home/{username}")
+
+    def ensure_user_exists(self, username: str) -> iRODSUser:
+        """
+        Ensure a user exists in iRODS, creating them and their home directory if necessary.
+
+        Args:
+            username: The username to ensure exists
+
+        Returns:
+            iRODSUser: The user object (either existing or newly created)
+
+        Raises:
+            Exception: If user or home directory creation fails
+        """
+        # Check if user already exists
+        if self.user_exists(username):
+            return self.get_user(username)
+
+        # Create the user
+        user = self.create_user(username)
+
+        # Ensure home directory exists
+        home_dir = self.home_directory(username)
+        if not self.path_exists(home_dir):
+            # Create home directory
+            self.session.collections.create(home_dir)
+            # Set ownership of home directory to the user
+            self.chmod(username=username, permission="own", path=home_dir)
+
+        return user

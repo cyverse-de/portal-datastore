@@ -177,15 +177,15 @@ def service_registration(registration: ServiceRegistration):
     if registration.irods_path == "":
         raise HTTPException(400, "irods_path must not be empty")
 
-    user = server.get_user(registration.username)
-    if user is None:
-        raise HTTPException(404, f"User {registration.username} does not exist")
+    # Ensure user exists (create if necessary)
+    try:
+        user = server.ensure_user_exists(registration.username)
+        print(f"User {registration.username} is ready for service registration", file=sys.stderr)
+    except Exception as e:
+        print(f"Failed to ensure user {registration.username} exists: {str(e)}", file=sys.stderr)
+        raise HTTPException(500, f"Failed to prepare user {registration.username}: {str(e)}")
 
     home_dir = server.home_directory(registration.username)
-    if not server.path_exists(home_dir):
-        raise HTTPException(
-            404, f"Home directory for {registration.username} does not exist"
-        )
 
     full_path = os.path.join(home_dir, registration.irods_path)
     if not server.path_exists(full_path):
