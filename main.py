@@ -191,10 +191,24 @@ def service_registration(registration: ServiceRegistration):
     if not server.path_exists(full_path):
         server.session.collections.create(full_path)
 
-    server.chmod(username="", permission="inherit", path=full_path)
-    server.chmod(username=registration.username, permission="own", path=full_path)
+    # Set permissions idempotently - check current permissions first
+    current_perms = server.get_permissions(full_path)
+
+    # Set inherit permission if not already set
+    inherit_set = any(perm.user_name == "" and perm.access_name == "inherit" for perm in current_perms)
+    if not inherit_set:
+        server.chmod(username="", permission="inherit", path=full_path)
+
+    # Set owner permission for username if not already set
+    user_owns = any(perm.user_name == registration.username and perm.access_name == "own" for perm in current_perms)
+    if not user_owns:
+        server.chmod(username=registration.username, permission="own", path=full_path)
+
+    # Set owner permission for irods_user if specified and not already set
     if registration.irods_user is not None:
-        server.chmod(username=registration.irods_user, permission="own", path=full_path)
+        irods_user_owns = any(perm.user_name == registration.irods_user and perm.access_name == "own" for perm in current_perms)
+        if not irods_user_owns:
+            server.chmod(username=registration.irods_user, permission="own", path=full_path)
 
     return {
         "user": registration.username,
